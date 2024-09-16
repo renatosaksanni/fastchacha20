@@ -2,6 +2,7 @@
 package fastchacha20
 
 import (
+	"bytes"
 	"crypto/rand"
 	"testing"
 
@@ -165,5 +166,36 @@ func TestEncryptWithShortNonce(t *testing.T) {
 	_, err = cipher.Encrypt(nonce, plaintext, nil)
 	if err == nil {
 		t.Error("Encryption should have failed with short nonce but succeeded")
+	}
+}
+
+func TestEncryptDecryptChunks(t *testing.T) {
+	key := make([]byte, chacha20poly1305.KeySize)
+	if _, err := rand.Read(key); err != nil {
+		t.Fatalf("Failed to generate key: %v", err)
+	}
+
+	cipher, err := NewCipher(key)
+	if err != nil {
+		t.Fatalf("Failed to create cipher: %v", err)
+	}
+
+	plaintext := make([]byte, 5*1024*1024) // 5MB
+	if _, err := rand.Read(plaintext); err != nil {
+		t.Fatalf("Failed to generate plaintext: %v", err)
+	}
+
+	encryptedChunks, err := cipher.EncryptChunks(plaintext)
+	if err != nil {
+		t.Fatalf("Encryption failed: %v", err)
+	}
+
+	decryptedPlaintext, err := cipher.DecryptChunks(encryptedChunks)
+	if err != nil {
+		t.Fatalf("Decryption failed: %v", err)
+	}
+
+	if !bytes.Equal(plaintext, decryptedPlaintext) {
+		t.Error("Decrypted plaintext does not match original")
 	}
 }
