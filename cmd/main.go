@@ -1,4 +1,4 @@
-// examples/main.go
+// cmd/main.go
 package main
 
 import (
@@ -7,11 +7,12 @@ import (
 	"log"
 
 	"github.com/renatosaksanni/fastchacha20"
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 func main() {
-	key := make([]byte, 32)   // 256-bit key
-	nonce := make([]byte, 24) // 192-bit nonce for ChaCha20-Poly1305 X
+	key := make([]byte, chacha20poly1305.KeySize)      // 32 bytes
+	nonce := make([]byte, chacha20poly1305.NonceSizeX) // 24 bytes for NewX()
 
 	_, err := rand.Read(key)
 	if err != nil {
@@ -29,16 +30,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Using parallel encryption
-	ciphertext, err := cipher.ParallelEncrypt(key, nonce, plaintext)
+	// Encrypt
+	ciphertext, err := cipher.Encrypt(nonce, plaintext, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("Ciphertext: %x\n", ciphertext)
 
-	// Decrypting
-	decryptedText, err := cipher.ParallelDecrypt(key, nonce, ciphertext)
+	// Decrypt
+	decryptedText, err := cipher.Decrypt(nonce, ciphertext, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
