@@ -11,22 +11,22 @@ type Cipher struct {
 	aead cipher.AEAD
 }
 
-// NewCipher creates a new Cipher instance with the given key.
+// NewCipher creates a new Cipher instance with the provided key.
 func NewCipher(key []byte) (*Cipher, error) {
-	aead, err := chacha20poly1305.NewX(key)
+	aead, err := chacha20poly1305.NewX(key) // For 192-bit nonces. Use New() for 96-bit nonces.
 	if err != nil {
 		return nil, err
 	}
 	return &Cipher{aead: aead}, nil
 }
 
-// Encrypt encrypts plaintext with the given nonce and optional additional data.
+// Encrypt encrypts plaintext with the given nonce and additional data.
 func (c *Cipher) Encrypt(nonce, plaintext, additionalData []byte) ([]byte, error) {
 	ciphertext := c.aead.Seal(nil, nonce, plaintext, additionalData)
 	return ciphertext, nil
 }
 
-// Decrypt decrypts ciphertext with the given nonce and optional additional data.
+// Decrypt decrypts ciphertext with the given nonce and additional data.
 func (c *Cipher) Decrypt(nonce, ciphertext, additionalData []byte) ([]byte, error) {
 	plaintext, err := c.aead.Open(nil, nonce, ciphertext, additionalData)
 	if err != nil {
