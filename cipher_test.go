@@ -166,6 +166,8 @@ func TestEncryptWithShortNonce(t *testing.T) {
 	_, err = cipher.Encrypt(nonce, plaintext, nil)
 	if err == nil {
 		t.Error("Encryption should have failed with short nonce but succeeded")
+	} else {
+		t.Logf("Expected error received: %v", err)
 	}
 }
 
