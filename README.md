@@ -1,8 +1,8 @@
-# Why FastChaCha20 Is Faster and More Efficient Than Regular ChaCha20-Poly1305
+## Why FastChaCha20 Is Faster and More Efficient Than Regular ChaCha20-Poly1305
 
 ---
 
-## 1. Parallel Processing with Goroutines
+### 1. Parallel Processing with Goroutines
 
 **What's Happening:**
 
@@ -20,7 +20,7 @@
 - **ChaCha20's Flexibility:** Even though ChaCha20 is a stream cipher, you can access different parts of the keystream by tweaking the nonce and counter. This allows for independent encryption of chunks without compromising security.
 - **Maintaining Security:** By ensuring each chunk uses the correct counter and there's no overlap, the integrity and security of the encryption remain intact.
 
-## 2. Optimized Memory Access and Buffer Usage
+### 2. Optimized Memory Access and Buffer Usage
 
 **What's Happening:**
 
@@ -32,7 +32,7 @@
 - **Less Garbage Collection Overhead:** Fewer memory allocations mean the garbage collector has less work to do, reducing pause times.
 - **Efficient Memory Access:** Operating on preallocated buffers improves CPU cache efficiency, speeding up data processing.
 
-## 3. Manual Control Over Cipher Operations
+### 3. Manual Control Over Cipher Operations
 
 **What's Happening:**
 
@@ -44,7 +44,7 @@
 - **Tailored Optimizations:** Handling encryption and MAC separately lets you optimize each part more effectively.
 - **Parallel MAC Calculation:** For large datasets, you might even parallelize the MAC computation, speeding things up further.
 
-## 4. Proper Counter Management for Parallelization
+### 4. Proper Counter Management for Parallelization
 
 **What's Happening:**
 
@@ -55,7 +55,7 @@
 
 - **Safe Parallel Processing:** You can process chunks in parallel without risking encryption security because each chunk is correctly managed.
 
-## 5. Leveraging Go's Features
+### 5. Leveraging Go's Features
 
 **What's Happening:**
 
@@ -67,7 +67,7 @@
 - **Efficient Concurrency:** Goroutines are lightweight, so you can run many of them without significant overhead.
 - **Focused Optimizations:** Profiling helps pinpoint slow parts of the code, so you can speed up exactly where it's needed.
 
-## 6. Optimized for Large Data Sets
+### 6. Optimized for Large Data Sets
 
 **What's Happening:**
 
@@ -79,7 +79,7 @@
 - **Increased Throughput:** Processing more data in less time by fully utilizing modern multi-core CPUs.
 - **Efficient Resource Use:** Makes the most out of your hardware capabilities.
 
-## 7. Optimized Poly1305 MAC
+### 7. Optimized Poly1305 MAC
 
 **What's Happening:**
 
@@ -91,7 +91,7 @@
 - **Potential Parallelization:** While Poly1305 is inherently sequential, with large data, you can optimize parts of its computation.
 - **Faster Authentication:** Reduces the time spent on verifying data integrity.
 
-## 8. Minimizing Synchronization Overhead
+### 8. Minimizing Synchronization Overhead
 
 **What's Happening:**
 
@@ -103,7 +103,7 @@
 - **Balanced Load:** Prevents the system from getting bogged down by too many concurrent operations.
 - **Smooth Execution:** Avoids bottlenecks from resource contention between goroutines.
 
-## 9. Eliminating Redundant Operations
+### 9. Eliminating Redundant Operations
 
 **What's Happening:**
 
@@ -117,7 +117,7 @@
 
 ---
 
-## Comparing to Standard ChaCha20-Poly1305 Implementations
+### Comparing to Standard ChaCha20-Poly1305 Implementations
 
 **Standard Implementations:**
 
@@ -133,7 +133,7 @@
 
 ---
 
-## Benchmark Results
+### Benchmark Results
 
 **Performance Testing:**
 
@@ -151,7 +151,7 @@
 
 ---
 
-## Security Considerations
+### Security Considerations
 
 - **Maintaining Security:** FastChaCha20 keeps the same level of security as standard implementations, provided it's correctly implemented.
 - **Potential Risks:** Optimizations must be carefully designed to avoid introducing vulnerabilities, like counter reuse.
@@ -159,7 +159,7 @@
 
 ---
 
-## Wrapping Up
+### Wrapping Up
 
 FastChaCha20 is faster and more efficient than typical ChaCha20-Poly1305 implementations because it:
 
