@@ -3,10 +3,10 @@ package main
 
 import (
 	"crypto/rand"
+	"fastchacha20"
 	"fmt"
 	"log"
 
-	"github.com/renatosaksanni/fastchacha20"
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
