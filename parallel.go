@@ -2,23 +2,21 @@
 package fastchacha20
 
 import (
+	"bytes"
 	"crypto/rand"
+	"encoding/binary"
+	"errors"
 	"sync"
 )
 
-type Chunk struct {
-	Nonce      []byte
-	Ciphertext []byte
-}
-
-// EncryptChunks encrypts the plaintext by splitting it into chunks and processing them in parallel.
-func (c *Cipher) EncryptChunks(plaintext []byte) ([]Chunk, error) {
-	chunkSize := 64 * 1024 // Adjust chunk size as needed
+// EncryptChunks encrypts the plaintext in parallel using unique nonces for each chunk.
+func (c *Cipher) EncryptChunks(plaintext []byte) ([][]byte, error) {
+	const chunkSize = 64 * 1024 // 64KB
 	numChunks := (len(plaintext) + chunkSize - 1) / chunkSize
-	chunks := make([]Chunk, numChunks)
+	encryptedChunks := make([][]byte, numChunks)
 	var wg sync.WaitGroup
-	var errMutex sync.Mutex
-	var encErr error
+	var errOnce sync.Once
+	var err error
 
 	for i := 0; i < numChunks; i++ {
 		wg.Add(1)
@@ -29,63 +27,77 @@ func (c *Cipher) EncryptChunks(plaintext []byte) ([]Chunk, error) {
 			if end > len(plaintext) {
 				end = len(plaintext)
 			}
+			chunk := plaintext[start:end]
 
+			// Generate a unique nonce for each chunk
 			nonce := make([]byte, c.aead.NonceSize())
-			if _, err := rand.Read(nonce); err != nil {
-				errMutex.Lock()
-				encErr = err
-				errMutex.Unlock()
+			if _, e := rand.Read(nonce); e != nil {
+				errOnce.Do(func() { err = e })
 				return
 			}
 
-			ciphertext := c.aead.Seal(nil, nonce, plaintext[start:end], nil)
-			chunks[i] = Chunk{
-				Nonce:      nonce,
-				Ciphertext: ciphertext,
-			}
+			// Include the chunk index in AAD
+			aad := make([]byte, 8)
+			binary.BigEndian.PutUint64(aad, uint64(i))
+
+			// Prepend nonce to the ciphertext for storage
+			ciphertext := c.aead.Seal(nonce, nonce, chunk, aad)
+			encryptedChunks[i] = ciphertext
 		}(i)
 	}
 	wg.Wait()
 
-	if encErr != nil {
-		return nil, encErr
+	if err != nil {
+		return nil, err
 	}
 
-	return chunks, nil
+	return encryptedChunks, nil
 }
 
-// DecryptChunks decrypts the ciphertext chunks in parallel and reassembles the plaintext.
-func (c *Cipher) DecryptChunks(chunks []Chunk) ([]byte, error) {
+// DecryptChunks decrypts the encrypted chunks in parallel and reassembles the plaintext.
+func (c *Cipher) DecryptChunks(encryptedChunks [][]byte) ([]byte, error) {
+	numChunks := len(encryptedChunks)
+	plaintextChunks := make([][]byte, numChunks)
 	var wg sync.WaitGroup
-	plaintextParts := make([][]byte, len(chunks))
-	var errMutex sync.Mutex
-	var decErr error
+	var errOnce sync.Once
+	var err error
 
-	for i, chunk := range chunks {
+	for i, chunk := range encryptedChunks {
 		wg.Add(1)
-		go func(i int, chunk Chunk) {
+		go func(i int, chunk []byte) {
 			defer wg.Done()
-			plaintext, err := c.aead.Open(nil, chunk.Nonce, chunk.Ciphertext, nil)
-			if err != nil {
-				errMutex.Lock()
-				decErr = err
-				errMutex.Unlock()
+			nonceSize := c.aead.NonceSize()
+			if len(chunk) < nonceSize+16 { // 16 bytes for Poly1305 tag
+				errOnce.Do(func() { err = errors.New("ciphertext too short") })
 				return
 			}
-			plaintextParts[i] = plaintext
+
+			nonce := chunk[:nonceSize]
+			ciphertext := chunk[nonceSize:]
+
+			// Include the chunk index in AAD
+			aad := make([]byte, 8)
+			binary.BigEndian.PutUint64(aad, uint64(i))
+
+			plaintext, e := c.aead.Open(nil, nonce, ciphertext, aad)
+			if e != nil {
+				errOnce.Do(func() { err = e })
+				return
+			}
+			plaintextChunks[i] = plaintext
 		}(i, chunk)
 	}
 	wg.Wait()
 
-	if decErr != nil {
-		return nil, decErr
+	if err != nil {
+		return nil, err
 	}
 
-	// Reassemble plaintext
-	plaintext := make([]byte, 0)
-	for _, part := range plaintextParts {
-		plaintext = append(plaintext, part...)
+	// Reassemble the plaintext
+	var plaintext bytes.Buffer
+	for _, chunk := range plaintextChunks {
+		plaintext.Write(chunk)
 	}
 
-	return plaintext, nil
+	return plaintext.Bytes(), nil
 }
