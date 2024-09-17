@@ -1,181 +1,317 @@
-## Why FastChaCha20 Is Faster and More Efficient Than Regular ChaCha20-Poly1305
+# FastChaCha20
+
+## Optimized ChaCha20-Poly1305 Implementation in Go
 
 ---
+
+FastChaCha20 is a Go library that gives you a supercharged version of **ChaCha20-Poly1305** encryption. It's all about speed and efficiency, aiming to provide the fastest and most compact encryption and decryption methods around. By leveraging Go's concurrency features and smart algorithm optimizations, it cranks up performance without sacrificing security.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Why FastChaCha20 is Faster](#why-fastchacha20-is-faster)
+  - [1. Parallel Processing with Goroutines](#1-parallel-processing-with-goroutines)
+  - [2. Optimized Memory Usage](#2-optimized-memory-usage)
+  - [3. Mathematical Explanations](#3-mathematical-explanations)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing and Benchmarking](#testing-and-benchmarking)
+- [License](#license)
+- [Contributing](#contributing)
+- [Contact](#contact)
+
+---
+
+## Features
+
+- **Optimized Encryption:** Uses various techniques to speed up ChaCha20-Poly1305 encryption and decryption.
+- **Parallel Processing:** Splits data into chunks and processes them concurrently using goroutines.
+- **Easy Integration:** Simple API that's easy to plug into your projects.
+- **High Security:** Follows best cryptographic practices to keep your data safe.
+
+---
+
+## Why FastChaCha20 is Faster
 
 ### 1. Parallel Processing with Goroutines
 
-**What's Happening:**
+**What's Going On:**
 
-- **Data Splitting:** FastChaCha20 chops up your data into smaller chunks, say 64KB each.
-- **Goroutines Galore:** Each chunk gets encrypted or decrypted simultaneously using Go's goroutines, which are lightweight threads.
-- **Managing the Chaos:** It uses things like `sync.WaitGroup` and semaphores to keep all these goroutines in check and prevent overloading your system.
-
-**Why It's Faster:**
-
-- **Maximizing CPU Usage:** By processing chunks in parallel, FastChaCha20 utilizes all your CPU cores, not just one.
-- **Reduced Total Time:** Since multiple chunks are handled at once, the overall time to encrypt or decrypt large files drops significantly compared to doing it serially.
-
-**The Science Behind It:**
-
-- **ChaCha20's Flexibility:** Even though ChaCha20 is a stream cipher, you can access different parts of the keystream by tweaking the nonce and counter. This allows for independent encryption of chunks without compromising security.
-- **Maintaining Security:** By ensuring each chunk uses the correct counter and there's no overlap, the integrity and security of the encryption remain intact.
-
-### 2. Optimized Memory Access and Buffer Usage
-
-**What's Happening:**
-
-- **Preallocating Buffers:** FastChaCha20 allocates memory for plaintext and ciphertext ahead of time, avoiding the need to request more memory during critical operations.
-- **Zero-Copy Techniques:** It works directly with the data slices, avoiding unnecessary copying of data.
+- **Chunking Data:** Your data gets chopped into smaller pieces (like 64KB each).
+- **Concurrent Encryption:** Each chunk gets encrypted or decrypted at the same time using Go's goroutines, which are lightweight threads.
+- **Managing Goroutines:** Uses `sync.WaitGroup` and semaphores to keep things organized and prevent overloading your CPU.
 
 **Why It's Faster:**
 
-- **Less Garbage Collection Overhead:** Fewer memory allocations mean the garbage collector has less work to do, reducing pause times.
-- **Efficient Memory Access:** Operating on preallocated buffers improves CPU cache efficiency, speeding up data processing.
+- **Full CPU Utilization:** By processing multiple chunks simultaneously, all CPU cores are used efficiently.
+- **Less Total Time:** Encrypting chunks in parallel reduces the overall time compared to processing them one after another.
 
-### 3. Manual Control Over Cipher Operations
+### 2. Optimized Memory Usage
 
-**What's Happening:**
+**What's Going On:**
 
-- **Custom Cipher Use:** By using `chacha20.NewUnauthenticatedCipher`, FastChaCha20 gains more control over encryption and decryption processes.
-- **Manual MAC Handling:** It calculates the Poly1305 MAC separately after encryption, allowing for further optimization and potential parallelization.
-
-**Why It's Faster:**
-
-- **Tailored Optimizations:** Handling encryption and MAC separately lets you optimize each part more effectively.
-- **Parallel MAC Calculation:** For large datasets, you might even parallelize the MAC computation, speeding things up further.
-
-### 4. Proper Counter Management for Parallelization
-
-**What's Happening:**
-
-- **Setting Counters Correctly:** Each goroutine sets the ChaCha20 counter based on its chunk's starting position in the data.
-- **Avoiding Overlaps:** This ensures that each chunk uses a unique keystream segment, preventing any security issues.
+- **Preallocated Buffers:** Allocates memory for plaintext and ciphertext ahead of time to avoid delays during encryption.
+- **Zero-Copy Techniques:** Processes data directly without unnecessary copying, which speeds things up.
 
 **Why It's Faster:**
 
-- **Safe Parallel Processing:** You can process chunks in parallel without risking encryption security because each chunk is correctly managed.
+- **Reduced Garbage Collection:** Fewer memory allocations mean less work for Go's garbage collector.
+- **Better Cache Performance:** Working with preallocated memory improves CPU cache efficiency.
 
-### 5. Leveraging Go's Features
+### 3. Mathematical Explanations
 
-**What's Happening:**
+**ChaCha20 Algorithm Basics:**
 
-- **Concurrency Tools:** FastChaCha20 takes full advantage of Go's concurrency features like goroutines and channels.
-- **Profiling for Performance:** It uses Go's profiling tools to identify bottlenecks and optimize them.
+ChaCha20 is a stream cipher that generates a keystream to encrypt data using XOR operations.
 
-**Why It's Faster:**
+- **State Matrix:** ChaCha20 uses a 4x4 matrix of 32-bit words:
 
-- **Efficient Concurrency:** Goroutines are lightweight, so you can run many of them without significant overhead.
-- **Focused Optimizations:** Profiling helps pinpoint slow parts of the code, so you can speed up exactly where it's needed.
+$$
+\begin{pmatrix}
+\text{const}_0 & \text{const}_1 & \text{const}_2 & \text{const}_3 \\
+\text{key}_0 & \text{key}_1 & \text{key}_2 & \text{key}_3 \\
+\text{key}_4 & \text{key}_5 & \text{key}_6 & \text{key}_7 \\
+\text{counter} & \text{nonce}_0 & \text{nonce}_1 & \text{nonce}_2 \\
+\end{pmatrix}
+$$
 
-### 6. Optimized for Large Data Sets
+- **Quarter Round Function:** Core of the algorithm, mixing the state with additions, XORs, and rotations.
 
-**What's Happening:**
+$$
+\begin{align*}
+a &= a + b;\quad d = \text{ROTL}(d \oplus a, 16) \\
+c &= c + d;\quad b = \text{ROTL}(b \oplus c, 12) \\
+a &= a + b;\quad d = \text{ROTL}(d \oplus a, 8) \\
+c &= c + d;\quad b = \text{ROTL}(b \oplus c, 7)
+\end{align*}
+$$
 
-- **Effective Chunking:** Splitting data into chunks works especially well with large files.
-- **Scalability:** The system scales performance with the number of CPU cores available.
+  - **ROTL:** Rotate left operation.
 
-**Why It's Faster:**
+- **Keystream Generation:** After running the rounds, the state is used to produce the keystream.
 
-- **Increased Throughput:** Processing more data in less time by fully utilizing modern multi-core CPUs.
-- **Efficient Resource Use:** Makes the most out of your hardware capabilities.
+**Parallelization Approach:**
 
-### 7. Optimized Poly1305 MAC
+- **Setting Counters for Chunks:**
 
-**What's Happening:**
+  - Each chunk uses a counter based on its position:
 
-- **Separate MAC Computation:** Calculates the MAC after encrypting all chunks, which can be optimized.
-- **Correct Key Usage:** Ensures the MAC key is derived and used properly according to the specs.
+$$
+\text{counter}_i = \text{initial counter} + \left\lfloor \dfrac{\text{offset}_i}{64} \right\rfloor
+$$
 
-**Why It's Faster:**
+  Where $\text{offset}_i$ is the starting byte of chunk $i$.
 
-- **Potential Parallelization:** While Poly1305 is inherently sequential, with large data, you can optimize parts of its computation.
-- **Faster Authentication:** Reduces the time spent on verifying data integrity.
+- **Ensuring Unique Keystreams:**
 
-### 8. Minimizing Synchronization Overhead
+  - By assigning unique counters, each chunk's encryption is independent and secure.
 
-**What's Happening:**
+**Poly1305 MAC:**
 
-- **Controlled Goroutine Execution:** Uses semaphores to limit the number of goroutines running simultaneously, matching your CPU's core count.
-- **Efficient Waiting:** Utilizes `sync.WaitGroup` to wait for all goroutines to finish without unnecessary overhead.
+- **Message Authentication Code:**
 
-**Why It's Faster:**
+  - Poly1305 generates a 128-bit tag to verify data integrity.
+  - Calculated as:
 
-- **Balanced Load:** Prevents the system from getting bogged down by too many concurrent operations.
-- **Smooth Execution:** Avoids bottlenecks from resource contention between goroutines.
+$$
+\text{Tag} = \left( \left( \sum_{i=1}^{n} a_i \cdot r^{i} \right) \mod (2^{130} - 5) \right) \mod 2^{128}
+$$
 
-### 9. Eliminating Redundant Operations
+   Where:
 
-**What's Happening:**
+   - $a_i$ are blocks of the message.
+   - $r$ is a 128-bit key (clamped).
+   - $n$ is the number of blocks.
 
-- **Streamlined Code:** Removes unnecessary computations inside critical loops.
-- **Compiler Optimizations:** Small functions are more likely to be inlined by the compiler, reducing function call overhead.
+**Parallel MAC Computation:**
 
-**Why It's Faster:**
-
-- **Reduced Instruction Count:** Fewer operations mean faster execution.
-- **Better Compiler Optimization:** Simpler code allows the compiler to optimize more effectively.
+   - While tricky, parts of Poly1305 can be optimized for large data sets.
 
 ---
 
-### Comparing to Standard ChaCha20-Poly1305 Implementations
+## Installation
 
-**Standard Implementations:**
+Make sure you have Go installed (version 1.15 or newer).
 
-- **Serial Processing:** Typically process data one piece at a time without parallelization.
-- **Limited Optimizations:** Focused more on correctness and security than on speed.
-- **Higher-Level Abstractions:** Might not provide control over low-level operations for optimization.
-
-**FastChaCha20:**
-
-- **Parallel Processing:** Splits tasks across multiple CPU cores using goroutines.
-- **Specific Optimizations:** Tailored to maximize performance in Go.
-- **Granular Control:** Offers more control over data processing, allowing for better performance tuning.
+```bash
+go get -u github.com/renatosaksanni/fastchacha20
+```
 
 ---
 
-### Benchmark Results
+## Usage
 
-**Performance Testing:**
+Here's how you can use FastChaCha20 in your project:
 
-- **Large Data Advantage:** Shows significant speed improvements when working with large files (gigabytes of data).
-- **High CPU Utilization:** Achieves near 100% CPU usage across all cores, maximizing hardware efficiency.
+```go
+package main
 
-**Example Results:**
+import (
+    "bytes"
+    "crypto/rand"
+    "encoding/binary"
+    "fmt"
+    "log"
 
-- **Standard Implementation:**
-  - **Encryption Time:** ~120 seconds for 10GB of data.
-  - **CPU Usage:** Around 25% on a quad-core CPU.
-- **FastChaCha20:**
-  - **Encryption Time:** ~35 seconds for the same 10GB.
-  - **CPU Usage:** About 95% on a quad-core CPU.
+    "github.com/renatosaksanni/fastchacha20"
+)
+
+func main() {
+    key := make([]byte, 32) // 256-bit key
+    if _, err := rand.Read(key); err != nil {
+        log.Fatalf("Failed to generate key: %v", err)
+    }
+
+    cipher, err := fastchacha20.NewCipher(key)
+    if err != nil {
+        log.Fatalf("Failed to create cipher: %v", err)
+    }
+
+    // Your plaintext data
+    plaintext := []byte("This is some secret data.")
+
+    // Encrypting the data
+    encryptedChunks, err := cipher.EncryptChunks(plaintext)
+    if err != nil {
+        log.Fatalf("Encryption failed: %v", err)
+    }
+
+    // Decrypting the data
+    decryptedPlaintext, err := cipher.DecryptChunks(encryptedChunks)
+    if err != nil {
+        log.Fatalf("Decryption failed: %v", err)
+    }
+
+    if !bytes.Equal(plaintext, decryptedPlaintext) {
+        log.Fatal("Decrypted plaintext does not match original")
+    }
+
+    fmt.Printf("Decrypted text: %s\n", decryptedPlaintext)
+}
+```
 
 ---
 
-### Security Considerations
+## Testing and Benchmarking
 
-- **Maintaining Security:** FastChaCha20 keeps the same level of security as standard implementations, provided it's correctly implemented.
-- **Potential Risks:** Optimizations must be carefully designed to avoid introducing vulnerabilities, like counter reuse.
-- **Need for Validation:** It's essential to thoroughly test and audit the implementation to ensure security isn't compromised.
+### Running Tests
+
+```bash
+go test
+```
+
+### Running Benchmarks
+
+```bash
+go test -bench=. -benchtime=10s
+```
+---
+
+# Security Considerations
+
+- **Nonce Uniqueness:** Always use a unique nonce for each encryption operation with the same key.
+- **Chunk Index in AAD:** Including the chunk index in the Additional Authenticated Data (AAD) binds each chunk to its position.
+- **Avoid Reusing Nonces:** Reusing a nonce with the same key can completely break the security.
 
 ---
 
-### Wrapping Up
+# Mathematical Details
 
-FastChaCha20 is faster and more efficient than typical ChaCha20-Poly1305 implementations because it:
+### Counter Calculation for Chunks
 
-- **Uses Parallel Processing:** Takes full advantage of multi-core CPUs with goroutines.
-- **Optimizes Memory Usage:** Reduces unnecessary memory operations and allocations.
-- **Provides Greater Control:** Allows for specific optimizations not possible with standard libraries.
-- **Leverages Go's Strengths:** Makes the most of Go's concurrency and performance features.
+Each chunk's counter is calculated based on its position:
 
-By incorporating these optimizations, FastChaCha20 significantly speeds up encryption and decryption processes, especially with large data sets, without sacrificing security.
+$$
+\text{counter}_i = \text{initial counter} + \left\lfloor \dfrac{\text{offset}_i}{64} \right\rfloor
+$$
+
+- **Ensures Unique Keystream:** Each chunk uses a different part of the keystream.
+
+### XOR Operation
+
+Encryption and decryption are performed using XOR:
+
+$$
+\text{Ciphertext} = \text{Plaintext} \oplus \text{Keystream}
+$$
+
+$$
+\text{Plaintext} = \text{Ciphertext} \oplus \text{Keystream}
+$$
 
 ---
 
-**Final Notes:**
+# Testing
 
-- **Security Is Paramount:** Always ensure that optimizations don't weaken the encryption. Validate and audit the code thoroughly.
-- **Best Use Cases:** Ideal for applications that need to handle large volumes of data quickly on multi-core systems.
-- **Standards Compliance:** Make sure your implementation adheres to the official ChaCha20-Poly1305 specifications to maintain compatibility and security.
+Tests are located in `cipher_test.go` and cover various scenarios:
+
+- Basic encryption and decryption
+- Handling of incorrect keys, nonces, and additional data
+- Encryption with short nonces (should return an error)
+
+---
+
+# Benchmarks
+
+Benchmarks are in `benchmark_test.go` and measure performance for different data sizes.
+
+- **Sample Benchmark Command:**
+
+  ```bash
+  go test -bench=. -benchtime=10s
+  ```
+
+- **Interpreting Results:**
+
+  - `ns/op`: Nanoseconds per operation
+  - `MB/s`: Throughput in megabytes per second
+
+---
+
+# Notes
+
+- **Concurrency:** Be cautious with goroutines; too many can cause overhead.
+- **Error Handling:** Always check for errors, especially when dealing with encryption.
+- **Stay Updated:** Keep dependencies up to date for security patches.
+
+---
+
+# Additional Resources
+
+- **Go Cryptography Documentation:** [https://golang.org/pkg/crypto/](https://golang.org/pkg/crypto/)
+- **ChaCha20 and Poly1305 Specification:** [RFC 8439](https://tools.ietf.org/html/rfc8439)
+- **Practical Cryptography in Go:** [Blog Post](https://blog.gopheracademy.com/advent-2017/practical-cryptography-go/)
+
+---
+
+# Shortcuts and Tips
+
+- **Import the Package:**
+
+  ```go
+  import "github.com/renatosaksanni/fastchacha20"
+  ```
+
+- **Generate Secure Random Data:**
+
+  ```go
+  rand.Read(data)
+  ```
+
+- **Check Nonce Sizes:**
+
+  ```go
+  nonce := make([]byte, cipher.aead.NonceSize())
+  ```
+
+- **Handle Errors:**
+
+  ```go
+  if err != nil {
+      log.Fatalf("An error occurred: %v", err)
+  }
+  ```
 
 ---
