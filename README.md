@@ -18,9 +18,10 @@ FastChaCha20 is a Go library that gives you a supercharged version of **ChaCha20
 - [Installation](#installation)
 - [Usage](#usage)
 - [Testing and Benchmarking](#testing-and-benchmarking)
-- [License](#license)
-- [Contributing](#contributing)
-- [Contact](#contact)
+- [Security Considerations](#security-considerations)
+- [Notes](#notes)
+- [Additional Resources](#additional-resources)
+- [Shortcuts and Tips](#shortcuts-and-tips)
 
 ---
 
@@ -214,59 +215,6 @@ go test -bench=. -benchtime=10s
 - **Nonce Uniqueness:** Always use a unique nonce for each encryption operation with the same key.
 - **Chunk Index in AAD:** Including the chunk index in the Additional Authenticated Data (AAD) binds each chunk to its position.
 - **Avoid Reusing Nonces:** Reusing a nonce with the same key can completely break the security.
-
----
-
-# Mathematical Details
-
-### Counter Calculation for Chunks
-
-Each chunk's counter is calculated based on its position:
-
-$$
-\text{counter}_i = \text{initial counter} + \left\lfloor \dfrac{\text{offset}_i}{64} \right\rfloor
-$$
-
-- **Ensures Unique Keystream:** Each chunk uses a different part of the keystream.
-
-### XOR Operation
-
-Encryption and decryption are performed using XOR:
-
-$$
-\text{Ciphertext} = \text{Plaintext} \oplus \text{Keystream}
-$$
-
-$$
-\text{Plaintext} = \text{Ciphertext} \oplus \text{Keystream}
-$$
-
----
-
-# Testing
-
-Tests are located in `cipher_test.go` and cover various scenarios:
-
-- Basic encryption and decryption
-- Handling of incorrect keys, nonces, and additional data
-- Encryption with short nonces (should return an error)
-
----
-
-# Benchmarks
-
-Benchmarks are in `benchmark_test.go` and measure performance for different data sizes.
-
-- **Sample Benchmark Command:**
-
-  ```bash
-  go test -bench=. -benchtime=10s
-  ```
-
-- **Interpreting Results:**
-
-  - `ns/op`: Nanoseconds per operation
-  - `MB/s`: Throughput in megabytes per second
 
 ---
 
