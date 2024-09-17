@@ -116,13 +116,13 @@ $$
   - Calculated as:
 
 $$
-\text{Tag} = \left( \left( \sum_{i=1}^{n} a_i \cdot r^{i} \right) \mod (2^{130} - 5) \right) \mod 2^{128}
+\text{Tag} = \left( \left( \sum_{i=1}^{n} a_i \cdot r^{i} \right) \mod (2^{130} - 5) \right) + s \mod \left(2^{128}\right)
 $$
 
    Where:
 
    - $a_i$ are blocks of the message.
-   - $r$ is a 128-bit key (clamped).
+   - $r$ and $s$ are 128-bit key (clamped).
    - $n$ is the number of blocks.
 
 **Parallel MAC Computation:**
