@@ -1,11 +1,10 @@
-// fastchacha20_parallel.go
+// parallel.go
 package fastchacha20
 
 import (
 	"bytes"
 	"crypto/rand"
 	"encoding/binary"
-	"errors"
 	"sync"
 )
 
@@ -40,9 +39,16 @@ func (c *Cipher) EncryptChunks(plaintext []byte) ([][]byte, error) {
 			aad := make([]byte, 8)
 			binary.BigEndian.PutUint64(aad, uint64(i))
 
+			// Encrypt the chunk using the Encrypt method from cipher.go
+			ciphertext, e := c.Encrypt(nonce, chunk, aad)
+			if e != nil {
+				errOnce.Do(func() { err = e })
+				return
+			}
+
 			// Prepend nonce to the ciphertext for storage
-			ciphertext := c.aead.Seal(nonce, nonce, chunk, aad)
-			encryptedChunks[i] = ciphertext
+			encryptedChunk := append(nonce, ciphertext...)
+			encryptedChunks[i] = encryptedChunk
 		}(i)
 	}
 	wg.Wait()
@@ -68,7 +74,7 @@ func (c *Cipher) DecryptChunks(encryptedChunks [][]byte) ([]byte, error) {
 			defer wg.Done()
 			nonceSize := c.aead.NonceSize()
 			if len(chunk) < nonceSize+16 { // 16 bytes for Poly1305 tag
-				errOnce.Do(func() { err = errors.New("ciphertext too short") })
+				errOnce.Do(func() { err = ErrInvalidCiphertext })
 				return
 			}
 
@@ -79,7 +85,8 @@ func (c *Cipher) DecryptChunks(encryptedChunks [][]byte) ([]byte, error) {
 			aad := make([]byte, 8)
 			binary.BigEndian.PutUint64(aad, uint64(i))
 
-			plaintext, e := c.aead.Open(nil, nonce, ciphertext, aad)
+			// Decrypt the chunk using the Decrypt method from cipher.go
+			plaintext, e := c.Decrypt(nonce, ciphertext, aad)
 			if e != nil {
 				errOnce.Do(func() { err = e })
 				return
