@@ -2,19 +2,13 @@
 
 ## Optimized ChaCha20-Poly1305 Implementation in Go
 
----
-
-FastChaCha20 is a Go library that gives you a supercharged version of **ChaCha20-Poly1305** encryption. It's all about speed and efficiency, aiming to provide the fastest and most compact encryption and decryption methods around. By leveraging Go's concurrency features and smart algorithm optimizations, it cranks up performance without sacrificing security.
-
----
+FastChaCha20 is a Go library that provides an optimized implementation of the **ChaCha20-Poly1305** encryption algorithm. It leverages Go's concurrency features to encrypt and decrypt data in parallel, enhancing performance for large data sets.
 
 ## Table of Contents
 
 - [Features](#features)
-- [Why FastChaCha20 is Faster](#why-fastchacha20-is-faster)
-  - [1. Parallel Processing with Goroutines](#1-parallel-processing-with-goroutines)
-  - [2. Optimized Memory Usage](#2-optimized-memory-usage)
-  - [3. Mathematical Explanations](#3-mathematical-explanations)
+- [Parallel Processing with Goroutines](#parallel-processing-with-goroutines)
+- [Mathematical Explanations](#mathematical-explanations)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Testing and Benchmarking](#testing-and-benchmarking)
@@ -23,45 +17,21 @@ FastChaCha20 is a Go library that gives you a supercharged version of **ChaCha20
 - [Additional Resources](#additional-resources)
 - [Shortcuts and Tips](#shortcuts-and-tips)
 
----
-
 ## Features
 
-- **Optimized Encryption:** Uses various techniques to speed up ChaCha20-Poly1305 encryption and decryption.
-- **Parallel Processing:** Splits data into chunks and processes them concurrently using goroutines.
-- **Easy Integration:** Simple API that's easy to plug into your projects.
-- **High Security:** Follows best cryptographic practices to keep your data safe.
+- **Parallel Encryption and Decryption**: Splits data into chunks and processes them concurrently using goroutines.
+- **Simple API**: Easy-to-use interface for integrating into your projects.
+- **High Security**: Adheres to cryptographic best practices to ensure data safety.
 
----
 
-## Why FastChaCha20 is Faster
-
-### 1. Parallel Processing with Goroutines
-
-**What's Going On:**
+## Parallel Processing with Goroutines
 
 - **Chunking Data:** Your data gets chopped into smaller pieces (like 64KB each).
 - **Concurrent Encryption:** Each chunk gets encrypted or decrypted at the same time using Go's goroutines, which are lightweight threads.
 - **Managing Goroutines:** Uses `sync.WaitGroup` and semaphores to keep things organized and prevent overloading your CPU.
 
-**Why It's Faster:**
 
-- **Full CPU Utilization:** By processing multiple chunks simultaneously, all CPU cores are used efficiently.
-- **Less Total Time:** Encrypting chunks in parallel reduces the overall time compared to processing them one after another.
-
-### 2. Optimized Memory Usage
-
-**What's Going On:**
-
-- **Preallocated Buffers:** Allocates memory for plaintext and ciphertext ahead of time to avoid delays during encryption.
-- **Zero-Copy Techniques:** Processes data directly without unnecessary copying, which speeds things up.
-
-**Why It's Faster:**
-
-- **Reduced Garbage Collection:** Fewer memory allocations mean less work for Go's garbage collector.
-- **Better Cache Performance:** Working with preallocated memory improves CPU cache efficiency.
-
-### 3. Mathematical Explanations
+## Mathematical Explanations
 
 **ChaCha20 Algorithm Basics:**
 
@@ -130,7 +100,6 @@ $$
 
    - While tricky, parts of Poly1305 can be optimized for large data sets.
 
----
 
 ## Installation
 
@@ -139,8 +108,6 @@ Make sure you have Go installed (version 1.15 or newer).
 ```bash
 go get -u github.com/renatosaksanni/fastchacha20
 ```
-
----
 
 ## Usage
 
@@ -193,7 +160,6 @@ func main() {
 }
 ```
 
----
 
 ## Testing and Benchmarking
 
@@ -208,33 +174,31 @@ go test
 ```bash
 go test -bench=. -benchtime=10s
 ```
----
 
-# Security Considerations
+## Security Considerations
 
 - **Nonce Uniqueness:** Always use a unique nonce for each encryption operation with the same key.
 - **Chunk Index in AAD:** Including the chunk index in the Additional Authenticated Data (AAD) binds each chunk to its position.
 - **Avoid Reusing Nonces:** Reusing a nonce with the same key can completely break the security.
 
----
 
-# Notes
+## Notes
 
 - **Concurrency:** Be cautious with goroutines; too many can cause overhead.
 - **Error Handling:** Always check for errors, especially when dealing with encryption.
 - **Stay Updated:** Keep dependencies up to date for security patches.
 
----
 
-# Additional Resources
+
+## Additional Resources
 
 - **Go Cryptography Documentation:** [https://golang.org/pkg/crypto/](https://golang.org/pkg/crypto/)
 - **ChaCha20 and Poly1305 Specification:** [RFC 8439](https://tools.ietf.org/html/rfc8439)
 - **Practical Cryptography in Go:** [Blog Post](https://blog.gopheracademy.com/advent-2017/practical-cryptography-go/)
 
----
 
-# Shortcuts and Tips
+
+## Shortcuts and Tips
 
 - **Import the Package:**
 
@@ -262,4 +226,3 @@ go test -bench=. -benchtime=10s
   }
   ```
 
----
