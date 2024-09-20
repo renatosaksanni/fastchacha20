@@ -1,7 +1,5 @@
 # FastChaCha20
 
-## Optimized ChaCha20-Poly1305 Implementation in Go
-
 FastChaCha20 is a Go library that provides an optimized implementation of the **ChaCha20-Poly1305** encryption algorithm. It leverages Go's concurrency features to encrypt and decrypt data in parallel, enhancing performance for large data sets.
 
 ## Table of Contents
