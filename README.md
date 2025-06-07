@@ -1,6 +1,6 @@
 # FastChaCha20
 
-FastChaCha20 is a Go library that provides an optimized implementation of the **ChaCha20-Poly1305** encryption algorithm. It leverages Go's concurrency features to encrypt and decrypt data in parallel, enhancing performance for large data sets.
+FastChaCha20 is a Go library that provides an optimized implementation of the **XChaCha20-Poly1305** encryption algorithm. It leverages Go's concurrency features to encrypt and decrypt data in parallel, enhancing performance for large data sets. XChaCha20-Poly1305 uses a 24-byte nonce, so ensure you generate one of that length for each message.
 
 ## Table of Contents
 
@@ -175,6 +175,7 @@ go test -bench=. -benchtime=10s
 
 ## Security Considerations
 
+- **Nonce Size:** XChaCha20-Poly1305 requires a 24-byte nonce. This differs from the 12-byte nonce used with standard ChaCha20-Poly1305.
 - **Nonce Uniqueness:** Always use a unique nonce for each encryption operation with the same key.
 - **Chunk Index in AAD:** Including the chunk index in the Additional Authenticated Data (AAD) binds each chunk to its position.
 - **Avoid Reusing Nonces:** Reusing a nonce with the same key can completely break the security.
@@ -210,7 +211,7 @@ go test -bench=. -benchtime=10s
   rand.Read(data)
   ```
 
-- **Check Nonce Sizes:**
+  - **Check Nonce Sizes:** The AEAD expects a 24-byte nonce.
 
   ```go
   nonce := make([]byte, cipher.aead.NonceSize())

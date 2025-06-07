@@ -14,7 +14,7 @@ type Cipher struct {
 
 // NewCipher creates a new Cipher instance with the provided key.
 func NewCipher(key []byte) (*Cipher, error) {
-	aead, err := chacha20poly1305.NewX(key) // For 192-bit nonces. Use New() for 96-bit nonces.
+	aead, err := chacha20poly1305.NewX(key) // XChaCha20-Poly1305 uses 24-byte nonces; use New() for 12-byte nonces.
 	if err != nil {
 		return nil, err
 	}
