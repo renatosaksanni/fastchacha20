@@ -122,7 +122,7 @@ func TestDecryptWithModifiedCiphertext(t *testing.T) {
 }
 
 func TestInvalidKeySize(t *testing.T) {
-	key := make([]byte, 16) // Invalid key size for ChaCha20-Poly1305 (requires 32 bytes)
+	key := make([]byte, 16) // Invalid key size for XChaCha20-Poly1305 (requires 32 bytes)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatalf("Failed to generate key: %v", err)
 	}

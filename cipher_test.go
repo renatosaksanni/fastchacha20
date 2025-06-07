@@ -26,7 +26,7 @@ func generateRandomNonce(t *testing.T, size int) []byte {
 func TestEncryptDecrypt(t *testing.T) {
 	// Generate random key and nonce
 	key := generateRandomKey(t, 32)     // 256-bit key
-	nonce := generateRandomNonce(t, 24) // 192-bit nonce (for ChaCha20-Poly1305)
+	nonce := generateRandomNonce(t, 24) // 24-byte nonce required by XChaCha20-Poly1305
 
 	cipher, err := NewCipher(key)
 	if err != nil {
@@ -95,7 +95,7 @@ func TestInvalidNonceLength(t *testing.T) {
 	}
 
 	// Generate invalid nonce
-	invalidNonce := generateRandomNonce(t, 16) // Should be 24 bytes for ChaCha20-Poly1305
+	invalidNonce := generateRandomNonce(t, 16) // Should be 24 bytes for XChaCha20-Poly1305
 	plaintext := []byte("Test plaintext")
 	aad := []byte("AAD data")
 
