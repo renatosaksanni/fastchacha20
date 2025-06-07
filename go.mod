@@ -1,4 +1,4 @@
-module fastchacha20
+module github.com/renatosaksanni/fastchacha20
 
 go 1.22.4
 
