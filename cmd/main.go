@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"fastchacha20"
+	"github.com/renatosaksanni/fastchacha20"
 
 	"golang.org/x/crypto/chacha20poly1305"
 )
