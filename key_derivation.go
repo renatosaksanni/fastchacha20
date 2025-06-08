@@ -16,8 +16,13 @@ func hkdfExtract(salt, inputKeyMaterial []byte, hashFunc func() hash.Hash) []byt
 	return h.Sum(nil)
 }
 
-func hkdfExpand(prk, info []byte, length int, hashFunc func() hash.Hash) []byte {
-	n := (length + hashFunc().Size() - 1) / hashFunc().Size()
+func hkdfExpand(prk, info []byte, length int, hashFunc func() hash.Hash) ([]byte, error) {
+	hashLen := hashFunc().Size()
+	if length > 255*hashLen {
+		return nil, ErrInvalidLength
+	}
+
+	n := (length + hashLen - 1) / hashLen
 	var t []byte
 	var okm []byte
 	for i := 0; i < n; i++ {
@@ -27,11 +32,11 @@ func hkdfExpand(prk, info []byte, length int, hashFunc func() hash.Hash) []byte 
 		t = h.Sum(nil)
 		okm = append(okm, t...)
 	}
-	return okm[:length]
+	return okm[:length], nil
 }
 
 // DeriveKey generates a derived key from the input key material.
-func DeriveKey(salt, inputKeyMaterial, info []byte, length int) []byte {
+func DeriveKey(salt, inputKeyMaterial, info []byte, length int) ([]byte, error) {
 	prk := hkdfExtract(salt, inputKeyMaterial, sha256.New)
 	return hkdfExpand(prk, info, length, sha256.New)
 }
